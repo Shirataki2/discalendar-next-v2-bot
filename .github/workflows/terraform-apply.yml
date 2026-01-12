@@ -53,6 +53,7 @@ jobs:
         env:
           TF_VAR_github_repository: ${{ github.repository }}
           TF_VAR_s3_bucket_name: ${{ secrets.TF_STATE_BUCKET_NAME }}
+          TF_VAR_oidc_provider_arn: ${{ secrets.OIDC_PROVIDER_ARN }}
 
       - name: Terraform Apply
         working-directory: ./terraform
@@ -60,6 +61,7 @@ jobs:
         env:
           TF_VAR_github_repository: ${{ github.repository }}
           TF_VAR_s3_bucket_name: ${{ secrets.TF_STATE_BUCKET_NAME }}
+          TF_VAR_oidc_provider_arn: ${{ secrets.OIDC_PROVIDER_ARN }}
 
       - name: Get Lightsail Instance Info
         id: lightsail
