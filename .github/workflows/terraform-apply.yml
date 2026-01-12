@@ -90,8 +90,9 @@ jobs:
       - name: Deploy Application
         run: |
           chmod +x scripts/deploy.sh
-          export SSH_KEY_PATH="$HOME/.ssh/lightsail_key"
           ./scripts/deploy.sh ${{ steps.lightsail.outputs.public_ip }} ${{ steps.lightsail.outputs.instance_name }}
+        env:
+          SSH_KEY_PATH: $HOME/.ssh/lightsail_key
           GITHUB_REPOSITORY: ${{ github.repository }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
