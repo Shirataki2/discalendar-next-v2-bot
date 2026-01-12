@@ -77,14 +77,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/lightsail_key
           chmod 600 ~/.ssh/lightsail_key
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/lightsail_key
+          # Debug: show key format (first line only, no sensitive data)
+          echo "Key format check:"
+          head -1 ~/.ssh/lightsail_key
+          echo "Key file size: $(wc -c < ~/.ssh/lightsail_key) bytes"
           ssh-keyscan -H ${{ steps.lightsail.outputs.public_ip }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Test SSH Connection
         run: |
           ssh -i ~/.ssh/lightsail_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${{ steps.lightsail.outputs.public_ip }} "echo 'SSH connection successful'"
-        continue-on-error: true
 
       - name: Deploy Application
         run: |
