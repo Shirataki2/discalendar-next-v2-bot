@@ -57,11 +57,19 @@ resource "aws_iam_role_policy" "github_actions_lightsail" {
           "lightsail:StopInstance",
           "lightsail:RebootInstance",
           "lightsail:GetInstanceSnapshot",
-          "lightsail:CreateInstanceSnapshot"
+          "lightsail:CreateInstanceSnapshot",
+          "lightsail:CreateInstances",
+          "lightsail:DeleteInstance",
+          "lightsail:AllocateStaticIp",
+          "lightsail:ReleaseStaticIp",
+          "lightsail:AttachStaticIp",
+          "lightsail:DetachStaticIp"
         ]
         Resource = [
           aws_lightsail_instance.bot.arn,
-          aws_lightsail_static_ip.bot.arn
+          aws_lightsail_static_ip.bot.arn,
+          "arn:aws:lightsail:${var.aws_region}:*:instance/*",
+          "arn:aws:lightsail:${var.aws_region}:*:static-ip/*"
         ]
       },
       {
@@ -87,9 +95,19 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Effect = "Allow"
         Action = [
           "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:GetBucketVersioning",
+          "s3:GetBucketPolicy",
           "s3:GetObject",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:GetBucketAcl",
+          "s3:PutBucketAcl",
+          "s3:PutBucketVersioning",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetEncryptionConfiguration"
         ]
         Resource = [
           aws_s3_bucket.terraform_state.arn,
@@ -99,11 +117,34 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
       {
         Effect = "Allow"
         Action = [
+          "dynamodb:DescribeTable",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
-          "dynamodb:DeleteItem"
+          "dynamodb:DeleteItem",
+          "dynamodb:CreateTable",
+          "dynamodb:UpdateTable"
         ]
         Resource = aws_dynamodb_table.terraform_lock.arn
+      }
+    ]
+  })
+}
+
+# IAM policy for reading OIDC provider (needed for Terraform data source)
+resource "aws_iam_role_policy" "github_actions_iam_read" {
+  name = "${var.instance_name}-github-actions-iam-read-policy"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:ListOpenIDConnectProviders",
+          "iam:GetOpenIDConnectProvider"
+        ]
+        Resource = "*"
       }
     ]
   })
