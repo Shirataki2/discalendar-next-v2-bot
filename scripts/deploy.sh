@@ -18,9 +18,11 @@ echo "Deploying to Lightsail instance: $INSTANCE_NAME ($PUBLIC_IP)"
 SSH_USER="ubuntu"
 SSH_HOST="$PUBLIC_IP"
 APP_DIR="/opt/discalendar-bot"
-# Expand ~ to home directory if SSH_KEY_PATH contains it
+# Expand ~ and $HOME to home directory if SSH_KEY_PATH contains them
 if [ -n "$SSH_KEY_PATH" ]; then
+  # Replace ~ with $HOME, then replace literal $HOME with actual home directory
   SSH_KEY="${SSH_KEY_PATH/#\~/$HOME}"
+  SSH_KEY="${SSH_KEY//\$HOME/$HOME}"
 else
   SSH_KEY="$HOME/.ssh/lightsail_key"
 fi
