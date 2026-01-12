@@ -13,3 +13,6 @@ tags = {
   Environment = "production"
   Project     = "discalendar-bot"
 }
+
+# Optional: OIDC provider ARN (if not provided, Terraform will try to look it up)
+# oidc_provider_arn = "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
