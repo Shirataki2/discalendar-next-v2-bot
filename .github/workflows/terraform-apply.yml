@@ -73,14 +73,18 @@ jobs:
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
       - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/lightsail_key
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/lightsail_key
           chmod 600 ~/.ssh/lightsail_key
-          # Debug: show key format (first line only, no sensitive data)
+          # Debug: show key format
           echo "Key format check:"
           head -1 ~/.ssh/lightsail_key
+          tail -1 ~/.ssh/lightsail_key
           echo "Key file size: $(wc -c < ~/.ssh/lightsail_key) bytes"
+          echo "Key line count: $(wc -l < ~/.ssh/lightsail_key)"
           ssh-keyscan -H ${{ steps.lightsail.outputs.public_ip }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Test SSH Connection
