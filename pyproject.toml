@@ -1,0 +1,35 @@
+[project]
+name = "discalendar-next-bot"
+version = "0.1.0"
+description = "Discord Bot for DisCalendar - Event management bot with Supabase integration"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "discord-py>=2.4.0",
+    "supabase>=2.10.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=24.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = ["mypy>=1.19.1"]
