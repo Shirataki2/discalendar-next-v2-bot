@@ -79,7 +79,8 @@ resource "aws_iam_role_policy" "github_actions_lightsail" {
           aws_lightsail_instance.bot.arn,
           aws_lightsail_static_ip.bot.arn,
           "arn:aws:lightsail:${var.aws_region}:${local.account_id}:instance/*",
-          "arn:aws:lightsail:${var.aws_region}:${local.account_id}:static-ip/*"
+          "arn:aws:lightsail:${var.aws_region}:${local.account_id}:static-ip/*",
+          "arn:aws:lightsail:${var.aws_region}:${local.account_id}:*"
         ]
       },
       {
