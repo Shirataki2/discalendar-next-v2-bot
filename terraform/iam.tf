@@ -1,3 +1,6 @@
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # OIDC Provider for GitHub Actions
 # Use data source if OIDC provider ARN is not provided, otherwise use variable
 data "aws_iam_openid_connect_provider" "github" {
@@ -7,6 +10,7 @@ data "aws_iam_openid_connect_provider" "github" {
 
 locals {
   oidc_provider_arn = var.oidc_provider_arn != "" ? var.oidc_provider_arn : data.aws_iam_openid_connect_provider.github[0].arn
+  account_id        = data.aws_caller_identity.current.account_id
 }
 
 # IAM role for GitHub Actions
@@ -74,8 +78,8 @@ resource "aws_iam_role_policy" "github_actions_lightsail" {
         Resource = [
           aws_lightsail_instance.bot.arn,
           aws_lightsail_static_ip.bot.arn,
-          "arn:aws:lightsail:${var.aws_region}:*:instance/*",
-          "arn:aws:lightsail:${var.aws_region}:*:static-ip/*"
+          "arn:aws:lightsail:${var.aws_region}:${local.account_id}:instance/*",
+          "arn:aws:lightsail:${var.aws_region}:${local.account_id}:static-ip/*"
         ]
       },
       {
@@ -156,7 +160,8 @@ resource "aws_iam_role_policy" "github_actions_iam_read" {
           "iam:GetRolePolicy"
         ]
         Resource = [
-          aws_iam_role.github_actions.arn,
+          "arn:aws:iam::${local.account_id}:role/${var.instance_name}-github-actions-role",
+          "arn:aws:iam::${local.account_id}:role/${var.instance_name}-github-actions-role/*",
           "arn:aws:iam::*:oidc-provider/token.actions.githubusercontent.com"
         ]
       }
