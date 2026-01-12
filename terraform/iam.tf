@@ -104,6 +104,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "s3:GetBucketLocation",
           "s3:GetBucketVersioning",
           "s3:GetBucketPolicy",
+          "s3:GetBucketCORS",
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
@@ -124,6 +125,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Effect = "Allow"
         Action = [
           "dynamodb:DescribeTable",
+          "dynamodb:DescribeContinuousBackups",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
@@ -136,7 +138,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
   })
 }
 
-# IAM policy for reading OIDC provider (needed for Terraform data source)
+# IAM policy for reading IAM resources (needed for Terraform data source and state refresh)
 resource "aws_iam_role_policy" "github_actions_iam_read" {
   name = "${var.instance_name}-github-actions-iam-read-policy"
   role = aws_iam_role.github_actions.id
@@ -148,9 +150,15 @@ resource "aws_iam_role_policy" "github_actions_iam_read" {
         Effect = "Allow"
         Action = [
           "iam:ListOpenIDConnectProviders",
-          "iam:GetOpenIDConnectProvider"
+          "iam:GetOpenIDConnectProvider",
+          "iam:GetRole",
+          "iam:ListRolePolicies",
+          "iam:GetRolePolicy"
         ]
-        Resource = "*"
+        Resource = [
+          aws_iam_role.github_actions.arn,
+          "arn:aws:iam::*:oidc-provider/token.actions.githubusercontent.com"
+        ]
       }
     ]
   })
