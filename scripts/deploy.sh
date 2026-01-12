@@ -18,6 +18,12 @@ echo "Deploying to Lightsail instance: $INSTANCE_NAME ($PUBLIC_IP)"
 SSH_USER="ubuntu"
 SSH_HOST="$PUBLIC_IP"
 APP_DIR="/opt/discalendar-bot"
+# Expand ~ to home directory if SSH_KEY_PATH contains it
+if [ -n "$SSH_KEY_PATH" ]; then
+  SSH_KEY="${SSH_KEY_PATH/#\~/$HOME}"
+else
+  SSH_KEY="$HOME/.ssh/lightsail_key"
+fi
 
 # Get repository URL from environment or use default
 if [ -z "$GITHUB_REPOSITORY" ]; then
@@ -28,7 +34,7 @@ else
 fi
 
 # Deploy via SSH
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+ssh -i "${SSH_KEY}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
   "${SSH_USER}@${SSH_HOST}" <<EOF
 set -e
 

@@ -73,13 +73,17 @@ jobs:
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/lightsail_key
+          ssh-keyscan -H ${{ steps.lightsail.outputs.public_ip }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Test SSH Connection
         run: |
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${{ steps.lightsail.outputs.public_ip }} "echo 'SSH connection successful'"
+          ssh -i ~/.ssh/lightsail_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@${{ steps.lightsail.outputs.public_ip }} "echo 'SSH connection successful'"
         continue-on-error: true
 
       - name: Deploy Application
@@ -87,6 +91,7 @@ jobs:
           chmod +x scripts/deploy.sh
           ./scripts/deploy.sh ${{ steps.lightsail.outputs.public_ip }} ${{ steps.lightsail.outputs.instance_name }}
         env:
+          SSH_KEY_PATH: $HOME/.ssh/lightsail_key
           GITHUB_REPOSITORY: ${{ github.repository }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
