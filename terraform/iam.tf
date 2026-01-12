@@ -109,6 +109,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "s3:GetBucketVersioning",
           "s3:GetBucketPolicy",
           "s3:GetBucketCORS",
+          "s3:GetBucketWebsite",
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
@@ -130,6 +131,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Action = [
           "dynamodb:DescribeTable",
           "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeTimeToLive",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
@@ -157,7 +159,8 @@ resource "aws_iam_role_policy" "github_actions_iam_read" {
           "iam:GetOpenIDConnectProvider",
           "iam:GetRole",
           "iam:ListRolePolicies",
-          "iam:GetRolePolicy"
+          "iam:GetRolePolicy",
+          "iam:ListAttachedRolePolicies"
         ]
         Resource = [
           "arn:aws:iam::${local.account_id}:role/${var.instance_name}-github-actions-role",
