@@ -1,0 +1,90 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-1
+  TF_VERSION: 1.5.0
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Format Check
+        working-directory: ./terraform
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Validate
+        working-directory: ./terraform
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ./terraform
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_github_repository: ${{ github.repository }}
+          TF_VAR_s3_bucket_name: ${{ secrets.TF_STATE_BUCKET_NAME }}
+
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_github_repository: ${{ github.repository }}
+          TF_VAR_s3_bucket_name: ${{ secrets.TF_STATE_BUCKET_NAME }}
+
+      - name: Get Lightsail Instance Info
+        id: lightsail
+        working-directory: ./terraform
+        run: |
+          INSTANCE_NAME=$(terraform output -raw lightsail_instance_name)
+          PUBLIC_IP=$(terraform output -raw lightsail_instance_public_ip)
+          echo "instance_name=$INSTANCE_NAME" >> $GITHUB_OUTPUT
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+
+      - name: Deploy Application
+        run: |
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh ${{ steps.lightsail.outputs.public_ip }} ${{ steps.lightsail.outputs.instance_name }}
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+          INVITATION_URL: ${{ secrets.INVITATION_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LOG_LEVEL: ${{ secrets.LOG_LEVEL || 'INFO' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}

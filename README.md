@@ -93,6 +93,31 @@ docker compose up -d
 docker compose logs -f
 ```
 
+## デプロイメント
+
+本プロジェクトはTerraformとGitHub Actionsを使用してAWS Lightsailに自動デプロイされます。
+
+詳細な手順は [デプロイメントガイド](docs/deployment.md) を参照してください。
+
+### クイックスタート
+
+1. **初回セットアップ**
+   - S3バケットとDynamoDBテーブルを作成
+   - GitHub OIDCプロバイダーを設定
+   - `terraform/terraform.tfvars` を設定
+   - 初回 `terraform apply` を実行
+
+2. **GitHub Secretsの設定**
+   - `AWS_ROLE_ARN`: Terraform出力から取得
+   - `TF_STATE_BUCKET_NAME`: S3バケット名
+   - `LIGHTSAIL_SSH_PRIVATE_KEY`: Lightsail SSH鍵
+   - その他の環境変数（BOT_TOKEN等）
+
+3. **自動デプロイ**
+   - `main`ブランチにマージすると自動的にデプロイされます
+
+詳細は [docs/deployment.md](docs/deployment.md) を参照してください。
+
 ## データベース
 
 このBotは discalendar-next プロジェクトのSupabaseデータベースを共有します。
