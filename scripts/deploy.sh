@@ -58,28 +58,32 @@ else
 fi
 
 echo "Configuring AWS credentials for CloudWatch Logs..."
-echo "AWS_ACCESS_KEY_ID length: \${#AWS_ACCESS_KEY_ID}"
-echo "AWS_SECRET_ACCESS_KEY length: \${#AWS_SECRET_ACCESS_KEY}"
+echo "AWS_ACCESS_KEY_ID present: \$([ -n \"${AWS_ACCESS_KEY_ID}\" ] && echo 'yes' || echo 'no')"
 echo "AWS_REGION: ${AWS_REGION:-ap-northeast-1}"
 
+# Configure for ubuntu user
 mkdir -p ~/.aws
-
-# Create credentials file
 echo "[default]" > ~/.aws/credentials
 echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
 echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+chmod 600 ~/.aws/credentials
 
-# Create config file
 echo "[default]" > ~/.aws/config
 echo "region = ${AWS_REGION:-ap-northeast-1}" >> ~/.aws/config
-
-chmod 600 ~/.aws/credentials
 chmod 644 ~/.aws/config
 
-echo "AWS credentials configured:"
-cat ~/.aws/config
-echo "Credentials file exists: \$(test -f ~/.aws/credentials && echo 'yes' || echo 'no')"
-echo "Credentials file size: \$(wc -c < ~/.aws/credentials) bytes"
+# Configure for root user (Docker daemon runs as root)
+sudo mkdir -p /root/.aws
+echo "[default]" | sudo tee /root/.aws/credentials > /dev/null
+echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" | sudo tee -a /root/.aws/credentials > /dev/null
+echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" | sudo tee -a /root/.aws/credentials > /dev/null
+sudo chmod 600 /root/.aws/credentials
+
+echo "[default]" | sudo tee /root/.aws/config > /dev/null
+echo "region = ${AWS_REGION:-ap-northeast-1}" | sudo tee -a /root/.aws/config > /dev/null
+sudo chmod 644 /root/.aws/config
+
+echo "AWS credentials configured for ubuntu and root users"
 
 # Install AWS CLI if not present
 if ! command -v aws &> /dev/null; then
@@ -93,8 +97,11 @@ if ! command -v aws &> /dev/null; then
 fi
 
 # Test AWS credentials
-echo "Testing AWS credentials..."
+echo "Testing AWS credentials (ubuntu user)..."
 aws sts get-caller-identity || echo "Warning: AWS credentials test failed"
+
+echo "Testing AWS credentials (root user)..."
+sudo aws sts get-caller-identity || echo "Warning: Root AWS credentials test failed"
 
 echo "Creating .env file..."
 {
