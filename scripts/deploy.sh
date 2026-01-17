@@ -58,33 +58,56 @@ else
 fi
 
 echo "Configuring AWS credentials for CloudWatch Logs..."
-mkdir -p ~/.aws
-cat > ~/.aws/credentials <<AWSEOF
-[default]
-aws_access_key_id = ${AWS_ACCESS_KEY_ID}
-aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
-AWSEOF
+echo "AWS_ACCESS_KEY_ID length: \${#AWS_ACCESS_KEY_ID}"
+echo "AWS_SECRET_ACCESS_KEY length: \${#AWS_SECRET_ACCESS_KEY}"
+echo "AWS_REGION: ${AWS_REGION:-ap-northeast-1}"
 
-cat > ~/.aws/config <<AWSCONFIGEOF
-[default]
-region = ${AWS_REGION:-ap-northeast-1}
-AWSCONFIGEOF
+mkdir -p ~/.aws
+
+# Create credentials file
+echo "[default]" > ~/.aws/credentials
+echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+
+# Create config file
+echo "[default]" > ~/.aws/config
+echo "region = ${AWS_REGION:-ap-northeast-1}" >> ~/.aws/config
 
 chmod 600 ~/.aws/credentials
 chmod 644 ~/.aws/config
 
+echo "AWS credentials configured:"
+cat ~/.aws/config
+echo "Credentials file exists: \$(test -f ~/.aws/credentials && echo 'yes' || echo 'no')"
+echo "Credentials file size: \$(wc -c < ~/.aws/credentials) bytes"
+
+# Install AWS CLI if not present
+if ! command -v aws &> /dev/null; then
+  echo "Installing AWS CLI..."
+  sudo apt-get update -qq
+  sudo apt-get install -y unzip
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+  unzip -q /tmp/awscliv2.zip -d /tmp
+  sudo /tmp/aws/install
+  rm -rf /tmp/aws /tmp/awscliv2.zip
+fi
+
+# Test AWS credentials
+echo "Testing AWS credentials..."
+aws sts get-caller-identity || echo "Warning: AWS credentials test failed"
+
 echo "Creating .env file..."
-cat > .env <<ENVEOF
-BOT_TOKEN=${BOT_TOKEN}
-APPLICATION_ID=${APPLICATION_ID}
-INVITATION_URL=${INVITATION_URL}
-SUPABASE_URL=${SUPABASE_URL}
-SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-LOG_LEVEL=${LOG_LEVEL:-INFO}
-SENTRY_DSN=${SENTRY_DSN:-}
-AWS_REGION=${AWS_REGION:-ap-northeast-1}
-AWS_CLOUDWATCH_LOG_GROUP=${AWS_CLOUDWATCH_LOG_GROUP}
-ENVEOF
+{
+  echo "BOT_TOKEN=${BOT_TOKEN}"
+  echo "APPLICATION_ID=${APPLICATION_ID}"
+  echo "INVITATION_URL=${INVITATION_URL}"
+  echo "SUPABASE_URL=${SUPABASE_URL}"
+  echo "SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}"
+  echo "LOG_LEVEL=${LOG_LEVEL:-INFO}"
+  echo "SENTRY_DSN=${SENTRY_DSN:-}"
+  echo "AWS_REGION=${AWS_REGION:-ap-northeast-1}"
+  echo "AWS_CLOUDWATCH_LOG_GROUP=${AWS_CLOUDWATCH_LOG_GROUP}"
+} > .env
 
 echo "Building and starting Docker containers..."
 docker compose down || true
