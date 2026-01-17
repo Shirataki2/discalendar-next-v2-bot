@@ -8,6 +8,7 @@
 - **CI/CD**: GitHub Actions（OIDC認証）
 - **デプロイ先**: AWS Lightsail（最小プラン: 512MB RAM, 1 vCPU）
 - **コンテナ**: Docker Compose
+- **ロギング**: AWS CloudWatch Logs
 
 ## 前提条件
 
@@ -115,6 +116,9 @@ terraform apply
 
 - `iam_role_arn`: GitHub Actionsで使用するIAMロールのARN
 - `lightsail_instance_public_ip`: LightsailインスタンスのパブリックIP
+- `cloudwatch_log_group_name`: CloudWatchロググループ名
+- `cloudwatch_access_key_id`: CloudWatch用アクセスキーID（自動的にGitHub Actionsに渡される）
+- `cloudwatch_secret_access_key`: CloudWatch用シークレットアクセスキー（自動的にGitHub Actionsに渡される）
 
 ### 6. GitHub Secretsの設定
 
@@ -223,8 +227,27 @@ export APPLICATION_ID="your-app-id"
   cd /opt/discalendar-bot
   docker compose logs
   ```
+- CloudWatch Logsでログを確認
+  - AWSコンソールで「CloudWatch」→「ログ」→「ロググループ」から`/aws/lightsail/discalendar-bot`を選択
+  - 「discalendar-bot」ログストリームを確認
 - 環境変数が正しく設定されているか確認
 - `.env`ファイルの内容を確認
+
+### CloudWatch Logsが表示されない
+
+- Docker Composeでログドライバーが正しく設定されているか確認
+  ```bash
+  cd /opt/discalendar-bot
+  docker compose config | grep -A 5 logging
+  ```
+- AWS認証情報が正しく設定されているか確認
+  ```bash
+  cat .env | grep AWS
+  ```
+- CloudWatchロググループが存在するか確認
+  ```bash
+  aws logs describe-log-groups --log-group-name-prefix /aws/lightsail/discalendar-bot
+  ```
 
 ## リソースの削除
 
@@ -237,13 +260,43 @@ terraform destroy
 
 > 注意: この操作は元に戻せません。すべてのリソースが削除されます。
 
+## CloudWatch Logsの確認方法
+
+BotのログはCloudWatch Logsに自動的に送信されます。
+
+### AWSコンソールでの確認
+
+1. AWSマネジメントコンソールにログイン
+2. CloudWatchサービスを開く
+3. 左メニューから「ログ」→「ロググループ」を選択
+4. `/aws/lightsail/discalendar-bot`ロググループを開く
+5. `discalendar-bot`ログストリームを選択してログを確認
+
+### AWS CLIでの確認
+
+```bash
+# 最新のログを表示
+aws logs tail /aws/lightsail/discalendar-bot --follow
+
+# 特定の時間範囲のログを検索
+aws logs filter-log-events \
+  --log-group-name /aws/lightsail/discalendar-bot \
+  --start-time $(date -u -d '1 hour ago' +%s)000 \
+  --filter-pattern "ERROR"
+```
+
+### ログの保持期間
+
+デフォルトでは7日間ログが保持されます。変更する場合は`terraform/cloudwatch.tf`の`retention_in_days`を編集してください。
+
 ## コスト見積もり
 
 - **Lightsailインスタンス（最小プラン）**: 約$3.50/月
 - **S3バケット（Terraformステート）**: ほぼ無料（使用量に応じて）
 - **DynamoDBテーブル（ステートロック）**: ほぼ無料（使用量に応じて）
+- **CloudWatch Logs**: 約$0.50/月（5GB/月まで無料枠、その後$0.50/GB）
 
-合計: 約**$3.50/月**
+合計: 約**$3.50〜$4.00/月**
 
 ## 参考リンク
 

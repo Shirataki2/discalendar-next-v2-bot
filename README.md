@@ -36,6 +36,7 @@ DisCalendar Botは、Discordサーバー内で予定を管理するためのBot�
 - **データベース**: Supabase (PostgreSQL)
 - **DBクライアント**: supabase-py
 - **パッケージ管理**: uv
+- **ロギング**: structlog + AWS CloudWatch Logs
 
 ## セットアップ
 
@@ -58,15 +59,19 @@ cp .env.example .env
 
 必要な環境変数:
 
-| 変数名 | 説明 |
-|--------|------|
-| `BOT_TOKEN` | DiscordボットのトークンDiscord Developer Portal] |
-| `APPLICATION_ID` | DiscordアプリケーションID |
-| `INVITATION_URL` | Bot招待URL |
-| `SUPABASE_URL` | SupabaseプロジェクトのURL |
-| `SUPABASE_SERVICE_KEY` | Supabaseのサービスロールキー |
-| `LOG_LEVEL` | ログレベル（オプション、デフォルト: INFO） |
-| `SENTRY_DSN` | Sentry DSN（オプション） |
+| 変数名 | 説明 | 必須 |
+|--------|------|------|
+| `BOT_TOKEN` | Discord Bot Token | ✅ |
+| `APPLICATION_ID` | Discord Application ID | ✅ |
+| `INVITATION_URL` | Bot招待URL | ✅ |
+| `SUPABASE_URL` | SupabaseプロジェクトのURL | ✅ |
+| `SUPABASE_SERVICE_KEY` | Supabaseのサービスロールキー | ✅ |
+| `LOG_LEVEL` | ログレベル（デフォルト: INFO） | ❌ |
+| `SENTRY_DSN` | Sentry DSN | ❌ |
+| `AWS_ACCESS_KEY_ID` | CloudWatch用AWSアクセスキーID（本番環境のみ） | ❌ |
+| `AWS_SECRET_ACCESS_KEY` | CloudWatch用AWSシークレットキー（本番環境のみ） | ❌ |
+| `AWS_REGION` | AWSリージョン（本番環境のみ） | ❌ |
+| `AWS_CLOUDWATCH_LOG_GROUP` | CloudWatchロググループ名（本番環境のみ） | ❌ |
 
 ### 3. Botの起動
 
@@ -92,6 +97,8 @@ docker compose up -d
 # ログ確認
 docker compose logs -f
 ```
+
+> **注意**: 本番環境ではログはCloudWatch Logsに送信されます。ローカル開発環境では、CloudWatch設定がない場合は`json-file`ドライバーにフォールバックします。
 
 ## デプロイメント
 
@@ -218,6 +225,36 @@ src/
     └── permissions.py  # 権限チェック
 ```
 
+## ロギング
+
+### ローカル開発
+
+ローカル開発環境では、ログはコンソールに出力されます。
+
+```bash
+python -m src.main
+```
+
+### 本番環境（CloudWatch Logs）
+
+本番環境では、ログはAWS CloudWatch Logsに自動的に送信されます。
+
+**AWSコンソールでの確認:**
+1. CloudWatchサービスを開く
+2. 「ログ」→「ロググループ」
+3. `/aws/lightsail/discalendar-bot`を選択
+
+**AWS CLIでの確認:**
+```bash
+# リアルタイムでログを表示
+aws logs tail /aws/lightsail/discalendar-bot --follow
+
+# エラーログのみフィルタ
+aws logs filter-log-events \
+  --log-group-name /aws/lightsail/discalendar-bot \
+  --filter-pattern "ERROR"
+```
+
 ## トラブルシューティング
 
 ### Botが起動しない
@@ -225,6 +262,7 @@ src/
 1. `.env` ファイルが正しく設定されているか確認
 2. `BOT_TOKEN` が正しいか確認
 3. Pythonバージョンが 3.12 以上か確認
+4. 本番環境の場合、CloudWatch Logsでエラーログを確認
 
 ### Slashコマンドが表示されない
 

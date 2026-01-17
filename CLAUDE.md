@@ -12,8 +12,9 @@ Discord上で予定を管理するためのBot。Webアプリケーション（d
 - **Discord**: discord.py 2.4+ (Slash Commands)
 - **DB**: Supabase (PostgreSQL)
 - **パッケージ管理**: uv
-- **ロギング**: structlog
+- **ロギング**: structlog + AWS CloudWatch Logs
 - **テスト**: pytest, pytest-asyncio, pytest-mock
+- **インフラ**: AWS Lightsail + Terraform + GitHub Actions
 
 ## アーキテクチャ
 
@@ -349,6 +350,11 @@ async def test_something(mocker: MockerFixture) -> None:
 - `structlog` を使用し、構造化ログで出力
 - ログレベルは環境変数 `LOG_LEVEL` で制御
 - 重要なイベント（コマンド実行、DB操作、エラー）は必ずログ記録
+- **本番環境**: AWS CloudWatch Logsに自動送信（Docker awslogsドライバー使用）
+  - ロググループ: `/aws/lightsail/discalendar-bot`
+  - ログストリーム: `discalendar-bot`
+  - AWSコンソールまたはCLI (`aws logs tail`) で確認可能
+- **ローカル開発**: コンソールまたはDockerログ (`docker compose logs`) で確認
 
 ### よくあるエラー
 
@@ -384,6 +390,12 @@ SUPABASE_SERVICE_KEY=   # Supabase Service Role Key
 INVITATION_URL=         # Bot招待URL
 LOG_LEVEL=INFO          # ログレベル (DEBUG/INFO/WARNING/ERROR)
 SENTRY_DSN=            # Sentryエラー追跡
+
+# AWS CloudWatch Logs（本番環境のみ）
+AWS_ACCESS_KEY_ID=           # CloudWatch用アクセスキーID
+AWS_SECRET_ACCESS_KEY=       # CloudWatch用シークレットアクセスキー
+AWS_REGION=ap-northeast-1    # AWSリージョン
+AWS_CLOUDWATCH_LOG_GROUP=    # CloudWatchロググループ名（例: /aws/lightsail/discalendar-bot）
 ```
 
 ## 開発フロー

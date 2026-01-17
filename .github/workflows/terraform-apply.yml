@@ -69,8 +69,14 @@ jobs:
         run: |
           INSTANCE_NAME=$(terraform output -raw lightsail_instance_name)
           PUBLIC_IP=$(terraform output -raw lightsail_instance_public_ip)
+          CLOUDWATCH_LOG_GROUP=$(terraform output -raw cloudwatch_log_group_name)
+          CLOUDWATCH_ACCESS_KEY=$(terraform output -raw cloudwatch_access_key_id)
+          CLOUDWATCH_SECRET_KEY=$(terraform output -raw cloudwatch_secret_access_key)
           echo "instance_name=$INSTANCE_NAME" >> $GITHUB_OUTPUT
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "cloudwatch_log_group=$CLOUDWATCH_LOG_GROUP" >> $GITHUB_OUTPUT
+          echo "cloudwatch_access_key=$CLOUDWATCH_ACCESS_KEY" >> $GITHUB_OUTPUT
+          echo "cloudwatch_secret_key=$CLOUDWATCH_SECRET_KEY" >> $GITHUB_OUTPUT
 
       - name: Setup SSH
         run: |
@@ -101,3 +107,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           LOG_LEVEL: ${{ secrets.LOG_LEVEL || 'INFO' }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
+          AWS_ACCESS_KEY_ID: ${{ steps.lightsail.outputs.cloudwatch_access_key }}
+          AWS_SECRET_ACCESS_KEY: ${{ steps.lightsail.outputs.cloudwatch_secret_key }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_CLOUDWATCH_LOG_GROUP: ${{ steps.lightsail.outputs.cloudwatch_log_group }}

@@ -32,3 +32,19 @@ output "dynamodb_table_name" {
   description = "Name of the DynamoDB table for state locking"
   value       = aws_dynamodb_table.terraform_lock.name
 }
+
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group for bot logs"
+  value       = aws_cloudwatch_log_group.bot.name
+}
+
+output "cloudwatch_access_key_id" {
+  description = "AWS Access Key ID for CloudWatch Logs"
+  value       = aws_iam_access_key.bot_cloudwatch.id
+}
+
+output "cloudwatch_secret_access_key" {
+  description = "AWS Secret Access Key for CloudWatch Logs"
+  value       = aws_iam_access_key.bot_cloudwatch.secret
+  sensitive   = true
+}
