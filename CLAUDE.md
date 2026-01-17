@@ -353,7 +353,8 @@ async def test_something(mocker: MockerFixture) -> None:
 - **本番環境**: AWS CloudWatch Logsに自動送信（Docker awslogsドライバー使用）
   - ロググループ: `/aws/lightsail/discalendar-bot`
   - ログストリーム: `discalendar-bot`
-  - AWSコンソールまたはCLI (`aws logs tail`) で確認可能
+  - 認証: `~/.aws/credentials` ファイル（デプロイスクリプトで自動設定）
+  - AWSコンソールまたはCLI (`aws logs tail /aws/lightsail/discalendar-bot --follow`) で確認可能
 - **ローカル開発**: コンソールまたはDockerログ (`docker compose logs`) で確認
 
 ### よくあるエラー
@@ -392,8 +393,7 @@ LOG_LEVEL=INFO          # ログレベル (DEBUG/INFO/WARNING/ERROR)
 SENTRY_DSN=            # Sentryエラー追跡
 
 # AWS CloudWatch Logs（本番環境のみ）
-AWS_ACCESS_KEY_ID=           # CloudWatch用アクセスキーID
-AWS_SECRET_ACCESS_KEY=       # CloudWatch用シークレットアクセスキー
+# 注意: AWS認証情報は ~/.aws/credentials ファイルに設定され、Dockerデーモンが使用します
 AWS_REGION=ap-northeast-1    # AWSリージョン
 AWS_CLOUDWATCH_LOG_GROUP=    # CloudWatchロググループ名（例: /aws/lightsail/discalendar-bot）
 ```

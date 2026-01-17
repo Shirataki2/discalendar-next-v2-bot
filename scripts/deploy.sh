@@ -57,6 +57,22 @@ else
   cd $APP_DIR
 fi
 
+echo "Configuring AWS credentials for CloudWatch Logs..."
+mkdir -p ~/.aws
+cat > ~/.aws/credentials <<AWSEOF
+[default]
+aws_access_key_id = ${AWS_ACCESS_KEY_ID}
+aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+AWSEOF
+
+cat > ~/.aws/config <<AWSCONFIGEOF
+[default]
+region = ${AWS_REGION:-ap-northeast-1}
+AWSCONFIGEOF
+
+chmod 600 ~/.aws/credentials
+chmod 644 ~/.aws/config
+
 echo "Creating .env file..."
 cat > .env <<ENVEOF
 BOT_TOKEN=${BOT_TOKEN}
@@ -66,8 +82,6 @@ SUPABASE_URL=${SUPABASE_URL}
 SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
 SENTRY_DSN=${SENTRY_DSN:-}
-AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_REGION=${AWS_REGION:-ap-northeast-1}
 AWS_CLOUDWATCH_LOG_GROUP=${AWS_CLOUDWATCH_LOG_GROUP}
 ENVEOF

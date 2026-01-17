@@ -242,11 +242,21 @@ export APPLICATION_ID="your-app-id"
   ```
 - AWS認証情報が正しく設定されているか確認
   ```bash
-  cat .env | grep AWS
+  # ~/.aws/credentialsファイルの存在確認
+  ls -la ~/.aws/credentials
+  
+  # 認証情報のテスト
+  aws sts get-caller-identity
   ```
 - CloudWatchロググループが存在するか確認
   ```bash
   aws logs describe-log-groups --log-group-name-prefix /aws/lightsail/discalendar-bot
+  ```
+- Dockerを再起動してみる
+  ```bash
+  cd /opt/discalendar-bot
+  docker compose down
+  docker compose up -d
   ```
 
 ## リソースの削除
@@ -263,6 +273,12 @@ terraform destroy
 ## CloudWatch Logsの確認方法
 
 BotのログはCloudWatch Logsに自動的に送信されます。
+
+### 仕組み
+
+1. Dockerの`awslogs`ドライバーがログをCloudWatch Logsに送信
+2. 認証情報は`~/.aws/credentials`ファイルから取得（デプロイスクリプトで自動設定）
+3. TerraformでCloudWatch書き込み専用のIAMユーザーとロググループを作成
 
 ### AWSコンソールでの確認
 
@@ -288,6 +304,27 @@ aws logs filter-log-events \
 ### ログの保持期間
 
 デフォルトでは7日間ログが保持されます。変更する場合は`terraform/cloudwatch.tf`の`retention_in_days`を編集してください。
+
+### トラブルシューティング: AccessDeniedエラー
+
+もし`AccessDeniedException`エラーが発生する場合：
+
+1. Lightsailインスタンスにログインして認証情報を確認
+   ```bash
+   cat ~/.aws/credentials
+   aws sts get-caller-identity
+   ```
+
+2. IAMユーザーの権限を確認
+   ```bash
+   aws iam get-user-policy --user-name discalendar-bot-cloudwatch-user --policy-name discalendar-bot-cloudwatch-logs-policy
+   ```
+
+3. 必要に応じて再デプロイ
+   ```bash
+   # GitHub Actionsで再実行するか、ローカルから
+   ./scripts/deploy.sh <instance-ip> <instance-name>
+   ```
 
 ## コスト見積もり
 

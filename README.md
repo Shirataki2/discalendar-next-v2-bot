@@ -68,10 +68,10 @@ cp .env.example .env
 | `SUPABASE_SERVICE_KEY` | Supabaseのサービスロールキー | ✅ |
 | `LOG_LEVEL` | ログレベル（デフォルト: INFO） | ❌ |
 | `SENTRY_DSN` | Sentry DSN | ❌ |
-| `AWS_ACCESS_KEY_ID` | CloudWatch用AWSアクセスキーID（本番環境のみ） | ❌ |
-| `AWS_SECRET_ACCESS_KEY` | CloudWatch用AWSシークレットキー（本番環境のみ） | ❌ |
 | `AWS_REGION` | AWSリージョン（本番環境のみ） | ❌ |
 | `AWS_CLOUDWATCH_LOG_GROUP` | CloudWatchロググループ名（本番環境のみ） | ❌ |
+
+**注意**: AWS認証情報（`AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`）は、本番環境では`~/.aws/credentials`ファイルに設定され、Docker awslogsドライバーがCloudWatch Logsにアクセスするために使用されます。コンテナの環境変数としては不要です。
 
 ### 3. Botの起動
 
