@@ -7,7 +7,7 @@ terraform {
     bucket         = "discalendar-bot-tfstate"
     key            = "discalendar-bot/terraform.tfstate"
     region         = "ap-northeast-1"
-    dynamodb_table = "terraform-state-lock"
+    use_lockfile   = true
     encrypt        = true
   }
 }
